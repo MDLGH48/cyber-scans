@@ -1,0 +1,6 @@
+fastapi==0.70.1
+typing-extensions==4.0.1
+uvicorn==0.16.0
+autopep8==1.6.0
+pytest==6.2.5
+requests
