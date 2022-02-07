@@ -5,7 +5,7 @@ from core.config import settings
 import uvicorn
 
 app = FastAPI(
-    title=settings.PROJECT_NAME, openapi_url=f"/openapi.json"
+    title=settings.PROJECT_NAME, openapi_url="/openapi.json"
 )
 
 app.add_middleware(

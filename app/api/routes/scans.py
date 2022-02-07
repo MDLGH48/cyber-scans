@@ -4,7 +4,7 @@ from uuid import uuid4
 from fastapi import Depends, APIRouter, Request, Path, BackgroundTasks
 from pydantic.types import UUID4
 from pydantic import BaseModel, AnyHttpUrl
-from data.db import Status, find_task_status
+from data.db import Status, scan_manager
 from core.process import scan_url
 
 
@@ -33,4 +33,4 @@ def injest(input_data: InjestRequest, background_tasks: BackgroundTasks):
 
 @router.get("/{scan_id}", response_model=ScanStatusResponse)
 def get_status(scan_id: UUID4):
-    return {"status": find_task_status(task_id=scan_id)}
+    return {"status": scan_manager.find_task_status(task_id=scan_id)}

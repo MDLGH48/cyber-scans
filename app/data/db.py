@@ -21,47 +21,50 @@ class Status(Enum):
     error = "Error"
     not_found = "Not-Found"
 
+class ScanManager:
+    def __init__(self, db={}):
+        self.db = db
 
-def log_status(scan_func: Callable):
+    def log_status(self, scan_func: Callable):
+        current_time = datetime.datetime.now()
+        def exec_scan(task, task_id):
+            self.db[task_id] = dict(
+                status=Status.accepted.value,
+                data=task,
+                submit_time=current_time,
+                details="init"
+            )
 
-    current_time = datetime.datetime.now()
+            try:
+                self.db[task_id].update(
+                    status=Status.running.value,
+                    data=task,
+                    details="preprocess"
+                )
+                processed_task = scan_func(task)
 
-    def exec_scan(task, task_id):
-        db_in_mem[task_id] = dict(
-            status=Status.accepted.value,
-            data=task,
-            submit_time=current_time,
-            details="init"
-        )
+                self.db[task_id].update(
+                    status=Status.completed.value,
+                    data=processed_task,
+                    details="postprocess"
+                )
 
+            except Exception as e:
+                self.db[task_id].update(
+                    status=Status.error.value,
+                    data=task,
+                    details=str(e)
+                )
+
+            return task_id
+
+        return exec_scan
+
+
+    def find_task_status(self, task_id: uuid4):
         try:
-            db_in_mem[task_id].update(
-                status=Status.running.value,
-                data=task,
-                details="preprocess"
-            )
-            processed_task = scan_func(task)
+            return self.db[task_id.hex]["status"]
+        except KeyError:
+            return Status.not_found.value
 
-            db_in_mem[task_id].update(
-                status=Status.completed.value,
-                data=processed_task,
-                details="postprocess"
-            )
-
-        except Exception as e:
-            db_in_mem[task_id].update(
-                status=Status.error.value,
-                data=task,
-                details=str(e)
-            )
-
-        return task_id
-
-    return exec_scan
-
-
-def find_task_status(task_id: uuid4):
-    try:
-        return db_in_mem[task_id.hex]["status"]
-    except KeyError:
-        return Status.not_found.value
+scan_manager = ScanManager()
