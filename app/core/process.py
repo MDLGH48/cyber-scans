@@ -1,10 +1,9 @@
-from data.db import create_conn, db_in_mem, scan_manager
+from data.db import scan_manager
 import requests
 import time
-    
+
+SLEEP_TIME_SEC = 10.0
 @scan_manager.log_status
 def scan_url(task):
-    time.sleep(40.0)
-    return str(requests.get(task).content)
- 
-
+    time.sleep(SLEEP_TIME_SEC)
+    return requests.get(task).headers

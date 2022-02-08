@@ -1,12 +1,22 @@
-import datetime
 from typing import Callable
 from core.config import settings
 import sqlite3
 from uuid import uuid4
-from pydantic.types import UUID4
-from enum import Enum
+from .types import Status
+from cachetools import cached, TTLCache
+from datetime import datetime, timedelta
+from core.config import settings
+import logging
+import json
 
-db_in_mem = {}
+
+class TaskLogFilter(logging.Filter):
+    def filter(self, record):
+        return "STEP_ID" and "TASK_ID" in record.getMessage()
+
+
+db_task_monitor = logging.getLogger("TASK_MONITOR")
+db_task_monitor.addFilter(TaskLogFilter())
 
 
 def create_conn():  # not implemented
@@ -14,57 +24,53 @@ def create_conn():  # not implemented
     return conn
 
 
-class Status(Enum):
-    accepted = "Accepted"
-    running = "Running"
-    completed = "Complete"
-    error = "Error"
-    not_found = "Not-Found"
+def update_task_state(task_id: str, task_state: dict, db: TTLCache):
+    db.__setitem__(task_id, task_state)
+    step_data = {"STEP_ID": uuid4().hex, "TASK_ID": task_id,
+                 "STATUS": task_state['status']}
+    db_task_monitor.info(json.dumps(step_data))
+
 
 class ScanManager:
-    def __init__(self, db={}):
+    def __init__(self, db: TTLCache = TTLCache(maxsize=1024, ttl=timedelta(minutes=21), timer=datetime.now)):
         self.db = db
 
     def log_status(self, scan_func: Callable):
-        current_time = datetime.datetime.now()
         def exec_scan(task, task_id):
-            self.db[task_id] = dict(
-                status=Status.accepted.value,
+            task_state = dict(
+                status=Status.Accepted.value,
                 data=task,
-                submit_time=current_time,
                 details="init"
             )
+            update_task_state(task_id, task_state, self.db)
 
             try:
-                self.db[task_id].update(
-                    status=Status.running.value,
-                    data=task,
-                    details="preprocess"
-                )
+                task_state["status"] = Status.Running.value
+                task_state["details"] = "pre_process"
+                update_task_state(task_id, task_state, self.db)
+
                 processed_task = scan_func(task)
 
-                self.db[task_id].update(
-                    status=Status.completed.value,
-                    data=processed_task,
-                    details="postprocess"
-                )
+                task_state["status"] = Status.Completed.value
+                task_state["details"] = "post_process"
+                task_state["data"] = processed_task
+                update_task_state(task_id, task_state, self.db)
 
             except Exception as e:
-                self.db[task_id].update(
-                    status=Status.error.value,
-                    data=task,
-                    details=str(e)
-                )
+                task_state["status"] = Status.Error.value
+                task_state["details"] = str(e)
+                task_state["data"] = task
+                update_task_state(task_id, task_state, self.db)
 
             return task_id
 
         return exec_scan
 
-
     def find_task_status(self, task_id: uuid4):
         try:
-            return self.db[task_id.hex]["status"]
+            return self.db.__getitem__(task_id.hex)["status"]
         except KeyError:
-            return Status.not_found.value
+            return Status.Not_found.value
+
 
 scan_manager = ScanManager()

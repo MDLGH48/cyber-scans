@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     RUN_ENV: Literal["dev", "deploy"] = "dev"
     APP_RELOAD: Optional[bool]
     DB_NAME:str = "scans"
+    cache_expire_min: int = 21
 
     @validator("APP_RELOAD", pre=True)
     def get_app_reload(cls, v, values: Dict[str, Any]) -> bool:

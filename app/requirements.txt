@@ -4,3 +4,5 @@ uvicorn==0.16.0
 autopep8==1.6.0
 pytest==6.2.5
 requests
+# celery==5.2.3
+cachetools==5.0.0
