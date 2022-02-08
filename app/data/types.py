@@ -4,6 +4,7 @@ from pydantic import BaseModel, AnyHttpUrl, Field
 from enum import Enum
 from pydantic.types import UUID4
 
+# status typing strictly enforces which values are allowed
 class Status(Enum):
     Accepted = "Accepted"
     Running = "Running"
@@ -20,4 +21,4 @@ class InjestModel(BaseModel):
 
 
 class ScanStatusResponse(BaseModel):
-    status: Literal[tuple([v.value for v in Status.__members__.values()])]
+    status: Literal[tuple([v.value for v in Status.__members__.values()])] #generate literal type from enum created above
