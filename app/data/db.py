@@ -35,9 +35,9 @@ def update_task_state(task_id: str, task_state: dict, db: TTLCache):
 class ScanManager:
     def __init__(
         self,
-        db: TTLCache = TTLCache(maxsize=1024, ttl=timedelta(minutes=21), timer=datetime.now) 
-        # https://cachetools.readthedocs.io/en/stable/#cachetools.TTLCache
-        ):
+        db: TTLCache = TTLCache(maxsize=1024, ttl=timedelta(minutes=21), timer=datetime.now)):
+        # time to live cache >> https://cachetools.readthedocs.io/en/stable/#cachetools.TTLCache
+        
         self.db = db
 
     def log_status(self, scan_func: Callable):

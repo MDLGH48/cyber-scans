@@ -1,5 +1,17 @@
 # cyber-scans
 
+# install + run
+```bash
+# python 3.7
+make startup
+```
+# test
+```bash
+make tests
+```
+
+
+### Prompt- 
 Design and implement a system for dispatching cyber scans.
 The system should be built of (at least) 3 separate logical units:
 

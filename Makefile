@@ -11,7 +11,7 @@ env:
 run:
 	. env/bin/activate && python app/main.py
 
-test: install env
+tests: install env
 	export PYTHONPATH="${PYTHONPATH}:app/" && export MONITOR_STEPS="1" && pytest tests/test.py
 
 clean_pyc:
